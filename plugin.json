@@ -1,6 +1,6 @@
 {
     "id": "agentUsage",
-    "name": "Agent Usage",
+    "name": "Dux Agent Usage",
     "description": "Claude Code, Codex and OpenCode limits, tokens and API cost in the bar, read from local files",
     "version": "0.7.0",
     "author": "Wasiq Mansoor",

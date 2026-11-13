@@ -172,7 +172,7 @@ PluginComponent {
             summary = I18n.trFor("agentUsage", "%1 %2 limit may run out early").arg(agent).arg(name);
             body = I18n.trFor("agentUsage", "At this pace it runs out in %1.").arg(Usage.formatDuration(entry.runsOutMs - now)) + " " + resets;
         }
-        Quickshell.execDetached(["dms", "notify", "-a", "Agent Usage", summary, body]);
+        Quickshell.execDetached(["dms", "notify", "-a", "Dux Agent Usage", summary, body]);
     }
 
     // Idle means no shown agent has done anything for a while. Coming back from idle selects the agent that woke it.

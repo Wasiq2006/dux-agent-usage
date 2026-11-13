@@ -1,4 +1,4 @@
-# Agent Usage
+# Dux Agent Usage
 
 A [DMS](https://duxlabs.dev) bar widget that shows your Claude Code, Codex and OpenCode usage: rate
 limits, tokens and what the same usage would cost at API prices.
@@ -32,7 +32,7 @@ dms restart
 dms ipc plugins enable agentUsage
 ```
 
-Then add **Agent Usage** to a bar section in Settings > Widgets.
+Then add **Dux Agent Usage** to a bar section in Settings > Widgets.
 
 ## Live Claude limits
 
