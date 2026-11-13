@@ -357,7 +357,7 @@ PluginComponent {
 
                             Figure {
                                 value: Usage.formatCost(root.usage?.cost ?? 0)
-                                label: I18n.trFor("agentUsage", "API-equivalent cost")
+                                label: I18n.trFor("agentUsage", "Cost")
                             }
 
                             Figure {
@@ -400,6 +400,14 @@ PluginComponent {
                         }
 
                         StyledText {
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            text: I18n.trFor("agentUsage", "Cost is API-equivalent: what these tokens would cost at list API prices.")
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceVariantText
+                        }
+
+                        StyledText {
                             visible: (root.usage?.unpriced.length ?? 0) > 0
                             width: parent.width
                             wrapMode: Text.WordWrap
@@ -420,6 +428,8 @@ PluginComponent {
         width: parent.width / 3
 
         StyledText {
+            width: parent.width
+            elide: Text.ElideRight
             text: parent.value
             font.pixelSize: Theme.fontSizeLarge
             font.weight: Theme.fontWeightMedium
@@ -427,6 +437,8 @@ PluginComponent {
         }
 
         StyledText {
+            width: parent.width
+            elide: Text.ElideRight
             text: parent.label
             font.pixelSize: Theme.fontSizeSmall
             color: Theme.surfaceVariantText
