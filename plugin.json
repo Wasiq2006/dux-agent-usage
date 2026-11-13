@@ -1,0 +1,18 @@
+{
+    "id": "agentUsage",
+    "name": "Agent Usage",
+    "description": "Claude Code, Codex and OpenCode limits, tokens and API cost in the bar, read from local files",
+    "version": "0.7.0",
+    "author": "Wasiq Mansoor",
+    "type": "composite",
+    "capabilities": ["dankbar-widget", "daemon"],
+    "components": {
+        "daemon": "./AgentUsageDaemon.qml",
+        "widget": "./AgentUsageWidget.qml"
+    },
+    "icon": "smart_toy",
+    "settings": "./AgentUsageSettings.qml",
+    "requires_dms": ">=2.1.0",
+    "dependencies": ["python3"],
+    "permissions": ["settings_read", "settings_write"]
+}
