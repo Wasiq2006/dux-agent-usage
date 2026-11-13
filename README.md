@@ -27,7 +27,7 @@ Right-click the widget to refresh it now.
 ## Install
 
 ```bash
-git clone <this repo> ~/.config/dms/plugins/agentUsage
+git clone https://github.com/Wasiq2006/dux-agent-usage.git ~/.config/dms/plugins/agentUsage
 dms restart
 dms ipc plugins enable agentUsage
 ```
