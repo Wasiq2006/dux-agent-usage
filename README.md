@@ -5,6 +5,24 @@ limits, tokens and what the same usage would cost at API prices.
 
 Everything is read from files on your computer. The widget never opens a credential file.
 
+## Screenshots
+
+### Claude Code
+
+![Claude Code usage popout](Image1.png)
+
+### Codex
+
+![Codex usage popout](Image2.png)
+
+### OpenCode
+
+![OpenCode usage popout](Image3.png)
+
+### Settings
+
+![Dux Agent Usage settings](Settings.png)
+
 ## What you see
 
 - **In the bar:** the agent's logo and how much of its limit is used. OpenCode has no limits, so it
