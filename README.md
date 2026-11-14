@@ -3,25 +3,16 @@
 A [DMS](https://duxlabs.dev) bar widget that shows your Claude Code, Codex and OpenCode usage: rate
 limits, tokens and what the same usage would cost at API prices.
 
-Everything is read from files on your computer. The widget never opens a credential file.
+Everything is read from files on your computer. The widget never opens a credential file. Its colors
+adapt to DMS's active theme, including light and dark themes.
 
 ## Screenshots
 
-### Claude Code
-
-![Claude Code usage popout](Image1.png)
-
-### Codex
-
-![Codex usage popout](Image2.png)
-
-### OpenCode
-
-![OpenCode usage popout](Image3.png)
-
-### Settings
-
-![Dux Agent Usage settings](Settings.png)
+<p align="center">
+  <img src="Image1.png" alt="Claude Code usage popout" width="32%">
+  <img src="Image2.png" alt="Codex usage popout" width="32%">
+  <img src="Image3.png" alt="OpenCode usage popout" width="32%">
+</p>
 
 ## What you see
 
@@ -85,6 +76,8 @@ and prints a short line such as `5h 54% · 7d 15%` in Claude Code's status bar.
 | Show names in the bar | on | Off shows only the logo and number |
 | Claude limit shown in the bar | 5-hour | 5-hour or weekly |
 | Download model prices | off | See "Cost" below |
+
+![Dux Agent Usage settings](Settings.png)
 
 ## What it reads
 
