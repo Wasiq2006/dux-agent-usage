@@ -42,8 +42,8 @@ PluginComponent {
     readonly property string claudeWindow: pluginData.claudeWindow ?? "five_hour"
 
     readonly property url providerIcon: Qt.resolvedUrl("icons/" + providerId + ".svg")
-    // Claude's colour is in its file. The other marks are monochrome: white on dark themes, black on light ones.
-    readonly property color logoTint: providerId === "claude" ? "transparent" : (Theme.isLightMode ? "black" : "white")
+    // Claude's colour is in its file. The other marks are monochrome, so they take the bar's text colour.
+    readonly property color logoTint: providerId === "claude" ? "transparent" : Theme.widgetTextColor
     // A logo fills its whole box, where a Material glyph of the same size has padding around it.
     readonly property int logoSize: Math.round(iconSize * 0.8)
 
@@ -184,7 +184,7 @@ PluginComponent {
 
     verticalBarPill: Component {
         Column {
-            spacing: 1
+            spacing: Theme.spacingXS
 
             DSVGIcon {
                 source: root.providerIcon
@@ -202,8 +202,6 @@ PluginComponent {
             }
         }
     }
-
-    popoutWidth: 360
 
     popoutContent: Component {
         PopoutComponent {

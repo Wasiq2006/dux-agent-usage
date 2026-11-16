@@ -2,7 +2,7 @@
     "id": "agentUsage",
     "name": "Dux Agent Usage",
     "description": "Claude Code, Codex and OpenCode limits, tokens and API cost in the bar, read from local files",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "author": "Wasiq Mansoor",
     "type": "composite",
     "capabilities": ["dankbar-widget", "daemon"],
