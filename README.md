@@ -3,8 +3,12 @@
 A [DMS](https://duxlabs.dev) bar widget that shows your Claude Code, Codex and OpenCode usage: rate
 limits, tokens and what the same usage would cost at API prices.
 
-Everything is read from files on your computer. The widget never opens a credential file. Its colors
-adapt to DMS's active theme, including light and dark themes.
+It reads the files each agent already writes on your computer and never opens a credential file.
+Two optional settings go further, and both are off by default: one adds a status line entry to Claude
+Code's settings, the other downloads a public price list (see [Live Claude limits](#live-claude-limits)
+and [Cost](#cost)).
+
+Its colors follow the active DMS theme, light or dark.
 
 ## Screenshots
 
@@ -16,15 +20,26 @@ adapt to DMS's active theme, including light and dark themes.
 
 ## What you see
 
-- **In the bar:** the agent's logo and how much of its limit is used. OpenCode has no limits, so it
-  shows today's tokens or cost.
-- **In the popout:** a switcher between agents, each limit with its reset time, a warning when a limit
-  will run out before it resets, tokens and cost for the last 30 days with a bar per day and its start and end dates, and the
-  same totals split by model.
-- **Notifications** when a limit is on pace to run out early, reaches 80%, and is used up.
+**In the bar:** the agent's logo and how much of its limit is used. The number turns to the theme's
+warning color when the limit is on pace to run out early, and to its error color when it is used up.
+OpenCode has no limits, so it shows today's tokens or cost instead.
+
+**In the popout:**
+
+- A switcher between Claude, Codex and OpenCode. The one you pick is also the one shown in the bar.
+- **Usage limits:** each limit with how much is used and when it resets. If your pace so far would use it
+  up before the reset, it says when it runs out.
+- **Last 30 days:** total tokens, cost and today's figure, then one bar per day. The first and last
+  dates of the range sit under the chart and move forward a day at midnight.
+- **By model:** the same 30 days split by model, most used first, with tokens and cost for each.
+  A model with no known price shows "no price" instead of a cost.
+
+**Notifications,** sent through DMS, once per limit period: when a limit is on pace to run out early,
+when it reaches 80%, and when it is used up.
 
 By default the widget only appears while an agent is open in a terminal and has been active in the
-last 5 minutes. Both rules can be turned off in the settings.
+last 5 minutes. It comes back with your next prompt and switches to the agent you used. Both rules
+can be turned off in the settings.
 
 Right-click the widget to refresh it now.
 
@@ -34,6 +49,8 @@ Right-click the widget to refresh it now.
 - `python3` (standard library only)
 - Linux (`ps` and `/proc`)
 
+Tested on Hyprland, Arch Linux, DMS 2.1.2.
+
 ## Install
 
 ```bash
@@ -42,7 +59,15 @@ dms restart
 dms ipc plugins enable agentUsage
 ```
 
-Then add **Dux Agent Usage** to a bar section in Settings > Widgets.
+Then add **Dux Agent Usage** to a bar section in Settings > Widgets. The first scan reads the last 30
+days of logs and can take a few seconds; later ones only read what was added since.
+
+## Uninstall
+
+1. If you turned on live Claude limits, choose **Turn off** in the plugin settings first. That removes
+   the status line entry from `~/.claude/settings.json`.
+2. Remove the widget from the bar and disable the plugin.
+3. Delete `~/.config/dms/plugins/agentUsage` and the cache at `~/.cache/dms-agent-usage`.
 
 ## Live Claude limits
 
@@ -97,14 +122,15 @@ shows up with the next Claude Code reply here.
 
 ## Cost
 
-"API-equivalent cost" is what your tokens would cost at list API prices. On a subscription it is not
-what you were charged.
+"Cost" in the popout is the API-equivalent cost: what your tokens would cost at list API prices. On a
+subscription it is not what you were charged.
 
 - **Claude:** Anthropic's published prices, built in (checked 2026-11-14).
 - **OpenCode:** the cost OpenCode itself records.
 - **Codex and other models:** unpriced until you turn on "Download model prices". That fetches the
   public [LiteLLM](https://github.com/BerriAI/litellm) price list at most once a day. It is the
-  plugin's only network request and sends nothing about your usage.
+  plugin's only network request and sends nothing about your usage. Until then these models show
+  "no price" in the By model list, and their tokens still count.
 
 ## Tests
 
