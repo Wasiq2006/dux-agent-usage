@@ -152,10 +152,25 @@ class PriceCase(unittest.TestCase):
         fast = {date + "\tclaude-opus-5-5\t1": [1000000, 0, 0, 0, 0, 1]}
         self.assertEqual(collect.summarize(fast, [date], {})["cost"], 8)
 
-    def test_model_without_a_price_is_reported_not_guessed(self):
+    def test_model_without_a_price_is_marked_not_guessed(self):
         date = collect.local_date(NOW)
         summary = collect.summarize({date + "\tsome-new-model\t0": [500, 500, 0, 0, 0, 1]}, [date], {})
-        self.assertEqual((summary["cost"], summary["tokens"], summary["unpriced"]), (0, 1000, ["some-new-model"]))
+        self.assertEqual((summary["cost"], summary["tokens"]), (0, 1000))
+        self.assertEqual(summary["models"], [["some-new-model", 1000, 0, False]])
+
+    def test_models_are_merged_by_display_name_and_sorted_by_use(self):
+        date = collect.local_date(NOW)
+        buckets = {
+            date + "\tclaude-haiku-5-5\t0": [1000, 0, 0, 0, 0, 1],
+            date + "\tclaude-haiku-5-5-long\t0": [1000, 0, 0, 0, 0, 1],
+            date + "\tclaude-opus-5-5-20260101\t0": [5000, 0, 0, 0, 0, 1],
+        }
+        models = collect.summarize(buckets, [date], {})["models"]
+        self.assertEqual([(row[0], row[1]) for row in models], [("Opus 5.5", 5000), ("Haiku 5.5", 2000)])
+
+    def test_days_outside_the_range_are_left_out(self):
+        summary = collect.summarize({"2000-01-01\tclaude-opus-5-5\t0": [1000, 0, 0, 0, 0, 1]}, [collect.local_date(NOW)], {})
+        self.assertEqual((summary["tokens"], summary["models"]), (0, []))
 
 
 if __name__ == "__main__":

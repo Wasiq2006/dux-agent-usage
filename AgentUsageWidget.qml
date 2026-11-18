@@ -53,6 +53,7 @@ PluginComponent {
     readonly property var windows: limits?.windows ?? []
     readonly property var usage: provider?.usage ?? null
     readonly property var daily: usage?.daily ?? []
+    readonly property var models: usage?.models ?? []
     readonly property real now: snapshot?.fetchedMs ?? 0
     // OpenCode reports no limits, so its pill shows today's use instead of a percentage.
     readonly property bool hasLimits: providerId !== "opencode"
@@ -103,6 +104,14 @@ PluginComponent {
         if (limits.stale)
             return I18n.trFor("agentUsage", "Limits last read %1 ago.").arg(Usage.formatDuration(now - limits.updatedMs));
         return "";
+    }
+
+    // "2026-11-19" -> "Nov 19" in the user's locale. The collector moves the range every day.
+    function shortDate(ymd) {
+        if (!ymd)
+            return "";
+        const parts = ymd.split("-");
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).toLocaleDateString(Qt.locale(), "MMM d");
     }
 
     // Days with no price still show their tokens, so an unpriced tool has a chart.
@@ -206,7 +215,6 @@ PluginComponent {
     popoutContent: Component {
         PopoutComponent {
             headerText: root.limits?.plan ? root.providerName + " · " + root.limits.plan : root.providerName
-            detailsText: I18n.trFor("agentUsage", "Read from local files")
 
             Column {
                 width: parent.width
@@ -397,21 +405,81 @@ PluginComponent {
                             }
                         }
 
-                        StyledText {
+                        Item {
                             width: parent.width
-                            wrapMode: Text.WordWrap
-                            text: I18n.trFor("agentUsage", "Cost is API-equivalent: what these tokens would cost at list API prices.")
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceVariantText
+                            height: startDate.implicitHeight
+
+                            StyledText {
+                                id: startDate
+                                text: root.shortDate(root.daily[0]?.[0])
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceVariantText
+                            }
+
+                            StyledText {
+                                anchors.right: parent.right
+                                text: root.shortDate(root.daily[root.daily.length - 1]?.[0])
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceVariantText
+                            }
                         }
+                    }
+                }
+
+                StyledRect {
+                    visible: root.models.length > 0
+                    width: parent.width
+                    height: modelColumn.implicitHeight + Theme.spacingM * 2
+                    radius: Theme.cornerRadius
+                    color: Theme.surfaceContainerHigh
+
+                    Column {
+                        id: modelColumn
+
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: Theme.spacingM
+                        spacing: Theme.spacingS
 
                         StyledText {
-                            visible: (root.usage?.unpriced.length ?? 0) > 0
-                            width: parent.width
-                            wrapMode: Text.WordWrap
-                            text: I18n.trFor("agentUsage", "No price for %1, so its cost is not counted.").arg((root.usage?.unpriced ?? []).join(", "))
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceVariantText
+                            text: I18n.trFor("agentUsage", "By model")
+                            font.pixelSize: Theme.fontSizeMedium
+                            font.weight: Theme.fontWeightMedium
+                            color: Theme.surfaceText
+                        }
+
+                        Repeater {
+                            // A count keeps the rows alive across refreshes, so only their values change.
+                            model: root.models.length
+
+                            Item {
+                                id: modelRow
+
+                                required property int index
+                                // [name, tokens, cost, priced]
+                                readonly property var entry: root.models[index] ?? null
+
+                                width: parent.width
+                                height: modelName.implicitHeight
+
+                                StyledText {
+                                    id: modelName
+                                    width: parent.width - modelFigures.implicitWidth - Theme.spacingS
+                                    elide: Text.ElideRight
+                                    text: modelRow.entry?.[0] ?? ""
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.surfaceText
+                                }
+
+                                StyledText {
+                                    id: modelFigures
+                                    anchors.right: parent.right
+                                    text: !modelRow.entry ? "" : Usage.formatTokens(modelRow.entry[1]) + " · " + (modelRow.entry[3] ? Usage.formatCost(modelRow.entry[2]) : I18n.trFor("agentUsage", "no price"))
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.surfaceVariantText
+                                }
+                            }
                         }
                     }
                 }

@@ -19,7 +19,8 @@ adapt to DMS's active theme, including light and dark themes.
 - **In the bar:** the agent's logo and how much of its limit is used. OpenCode has no limits, so it
   shows today's tokens or cost.
 - **In the popout:** a switcher between agents, each limit with its reset time, a warning when a limit
-  will run out before it resets, tokens and cost for the last 30 days, and a bar per day.
+  will run out before it resets, tokens and cost for the last 30 days with a bar per day and its start and end dates, and the
+  same totals split by model.
 - **Notifications** when a limit is on pace to run out early, reaches 80%, and is used up.
 
 By default the widget only appears while an agent is open in a terminal and has been active in the

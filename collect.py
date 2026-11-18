@@ -15,7 +15,7 @@ import tempfile
 import time
 from datetime import datetime, timedelta
 
-INDEX_VERSION = 2
+INDEX_VERSION = 3
 RANGE_DAYS = 30
 # Days kept beyond the range so a message near the edge is still deduped.
 RETENTION_MARGIN_DAYS = 2
@@ -370,26 +370,32 @@ def load_prices(cache_dir, allow_fetch):
     return cache["models"]
 
 
-def summarize(buckets, dates, litellm):
+def display_model(model):
+    """'claude-opus-5-5' -> 'Opus 5.5'. Other ids are shown as their tool records them."""
+    name = normalize_model(model)
+    if name.endswith(LONG_PROMPT_SUFFIX):
+        name = name[:-len(LONG_PROMPT_SUFFIX)]
+    if not name.startswith("claude-"):
+        return name
+    parts = name[len("claude-"):].split("-")
+    version = ".".join(part for part in parts[1:] if part.isdigit())
+    return (parts[0].capitalize() + " " + version).strip()
+
+
+def usage_block(dates, entries):
+    """entries: (date, model, cost, tokens, priced). Totals for the range, per day and per model."""
     daily = {date: [0.0, 0] for date in dates}
-    unpriced = set()
-    for key, bucket in buckets.items():
-        date, model, fast = key.split("\t")
-        if date not in daily:
+    models = {}
+    for date, model, cost, tokens, priced in entries:
+        if date not in daily or not tokens:
             continue
-        tokens = sum(bucket[:5])
-        if tokens == 0:
-            continue
-        price = price_for(model, litellm)
-        cost = 0.0
-        if price:
-            cost = sum(bucket[index] * price[position] for index, position in ((0, 0), (1, 1), (2, 4), (3, 2), (4, 3))) / 1e6
-            if fast == "1":
-                cost *= FAST_MULTIPLIER
-        else:
-            unpriced.add(normalize_model(model))
         daily[date][0] += cost
         daily[date][1] += tokens
+        name = display_model(model)
+        row = models.setdefault(name, [0.0, 0, True])
+        row[0] += cost
+        row[1] += tokens
+        row[2] = row[2] and priced
     today = daily[dates[-1]]
     return {
         "tokens": sum(day[1] for day in daily.values()),
@@ -397,8 +403,23 @@ def summarize(buckets, dates, litellm):
         "todayTokens": today[1],
         "todayCost": round(today[0], 4),
         "daily": [[date, round(daily[date][0], 4), daily[date][1]] for date in dates],
-        "unpriced": sorted(unpriced),
+        # [name, tokens, cost, priced], most used first.
+        "models": sorted(([name, row[1], round(row[0], 4), row[2]] for name, row in models.items()), key=lambda row: -row[1]),
     }
+
+
+def summarize(buckets, dates, litellm):
+    entries = []
+    for key, bucket in buckets.items():
+        date, model, fast = key.split("\t")
+        price = price_for(model, litellm)
+        cost = 0.0
+        if price:
+            cost = sum(bucket[index] * price[position] for index, position in ((0, 0), (1, 1), (2, 4), (3, 2), (4, 3))) / 1e6
+            if fast == "1":
+                cost *= FAST_MULTIPLIER
+        entries.append((date, model, cost, sum(bucket[:5]), price is not None))
+    return usage_block(dates, entries)
 
 
 def make_window(key, minutes, model, percent, resets, now):
@@ -502,8 +523,9 @@ def opencode_usage(data_home, cache, dates):
     token_sum = " + ".join("coalesce(json_extract(data, '$.tokens.%s'), 0)" % field
                            for field in ("input", "output", "reasoning", "cache.read", "cache.write"))
     query = ("select strftime('%Y-%m-%d', time_created / 1000, 'unixepoch', 'localtime'), "
+             "coalesce(json_extract(data, '$.model.id'), 'unknown'), "
              "sum(coalesce(json_extract(data, '$.cost'), 0)), sum(" + token_sum + ") "
-             "from session_message where type = 'assistant' and time_created >= ? group by 1")
+             "from session_message where type = 'assistant' and time_created >= ? group by 1, 2")
     start = datetime.strptime(dates[0], "%Y-%m-%d").timestamp() * 1000
     try:
         connection = sqlite3.connect("file:%s?mode=ro" % path, uri=True, timeout=1)
@@ -514,19 +536,7 @@ def opencode_usage(data_home, cache, dates):
     except sqlite3.Error:
         return cache.get("usage"), False
 
-    daily = {date: [0.0, 0] for date in dates}
-    for date, cost, tokens in rows:
-        if date in daily:
-            daily[date] = [round(cost or 0, 4), tokens or 0]
-    today = daily[dates[-1]]
-    usage = {
-        "tokens": sum(day[1] for day in daily.values()),
-        "cost": round(sum(day[0] for day in daily.values()), 4),
-        "todayTokens": today[1],
-        "todayCost": today[0],
-        "daily": [[date, daily[date][0], daily[date][1]] for date in dates],
-        "unpriced": [],
-    }
+    usage = usage_block(dates, ((date, model, cost or 0, tokens or 0, True) for date, model, cost, tokens in rows))
     cache["stamp"] = stamp
     cache["usage"] = usage
     return usage, True
