@@ -41,14 +41,24 @@ def command_line():
     return "python3 " + os.path.abspath(__file__)
 
 
+def is_ours(command):
+    """True when the command runs this very file, whichever path or symlink it names."""
+    words = command.split()
+    return bool(words) and os.path.realpath(os.path.expanduser(words[-1])) == os.path.realpath(__file__)
+
+
 def setup(action):
-    """Adds or removes this script as Claude Code's status line. Prints installed, missing or other."""
+    """Adds or removes this script as Claude Code's status line. Prints installed, missing, other or unreadable."""
     path = settings_path()
-    settings = read_json(path)
-    if not isinstance(settings, dict):
-        settings = {}
+    settings = {}
+    if os.path.exists(path):
+        settings = read_json(path)
+        # Writing would replace the whole file with just our entry.
+        if not isinstance(settings, dict):
+            print("unreadable")
+            return
     current = settings.get("statusLine")
-    ours = isinstance(current, dict) and os.path.basename(__file__) in str(current.get("command", "")) and "agentUsage" in str(current.get("command", ""))
+    ours = isinstance(current, dict) and is_ours(str(current.get("command", "")))
     if current and not ours:
         # Someone else's status line: never replace it.
         print("other")

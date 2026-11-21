@@ -45,6 +45,8 @@ PluginSettings {
                     return I18n.trFor("agentUsage", "On. Claude Code reports its limits to this widget after every reply.");
                 case "other":
                     return I18n.trFor("agentUsage", "Claude Code already has a custom status line, so this was left alone. Call statusline.py from your own script to get live limits.");
+                case "unreadable":
+                    return I18n.trFor("agentUsage", "Claude Code's settings.json could not be read, so it was left untouched. Fix the file, then reopen these settings.");
                 case "missing":
                     return I18n.trFor("agentUsage", "Off. Turning this on adds a status line entry to Claude Code's settings.json.");
                 default:

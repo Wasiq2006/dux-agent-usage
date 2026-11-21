@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import os
 import sys
@@ -128,6 +130,44 @@ class LimitCase(unittest.TestCase):
         new = {"used_percentage": 3, "resets_at": 19000}
         self.assertEqual(statusline.merge(old, new), new)
         self.assertEqual(statusline.merge(new, old), new)
+
+
+class SetupCase(unittest.TestCase):
+    def run_setup(self, action, content):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        path = os.path.join(directory.name, "settings.json")
+        if content is not None:
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(content)
+        previous = os.environ.get("CLAUDE_CONFIG_DIR")
+        os.environ["CLAUDE_CONFIG_DIR"] = directory.name
+        output = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(output):
+                statusline.setup(action)
+        finally:
+            if previous is None:
+                del os.environ["CLAUDE_CONFIG_DIR"]
+            else:
+                os.environ["CLAUDE_CONFIG_DIR"] = previous
+        written = open(path, encoding="utf-8").read() if os.path.exists(path) else None
+        return output.getvalue().strip(), written
+
+    def test_unreadable_settings_are_left_untouched(self):
+        broken = '{"model": "opus", oops'
+        self.assertEqual(self.run_setup("--install", broken), ("unreadable", broken))
+        self.assertEqual(self.run_setup("--install", "[1, 2]"), ("unreadable", "[1, 2]"))
+
+    def test_install_keeps_other_settings_and_uninstall_removes_only_its_entry(self):
+        status, written = self.run_setup("--install", '{"model": "opus"}')
+        self.assertEqual((status, json.loads(written)["model"]), ("installed", "opus"))
+        status, written = self.run_setup("--uninstall", written)
+        self.assertEqual((status, json.loads(written)), ("missing", {"model": "opus"}))
+
+    def test_someone_elses_status_line_is_never_replaced(self):
+        mine = '{"statusLine": {"type": "command", "command": "my-own.sh"}}'
+        self.assertEqual(self.run_setup("--install", mine), ("other", mine))
 
 
 class PriceCase(unittest.TestCase):
