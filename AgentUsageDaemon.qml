@@ -31,7 +31,7 @@ PluginComponent {
 
     onRefreshRequestChanged: {
         if (refreshRequest > 0)
-            refresh();
+            refresh(true);
     }
 
     PluginGlobalVar {
@@ -43,8 +43,12 @@ PluginComponent {
     readonly property var agentIds: ["claude", "codex", "opencode"]
     readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache") + "/dms-agent-usage"
 
-    function refresh() {
+    function refresh(force) {
         if (!ready)
+            return;
+        // Nothing is shown while every agent is closed; applyRunning() refreshes when one opens.
+        const running = pluginService.globalVars[pluginId]?.running ?? null;
+        if (!force && onlyWhenRunning && running !== null && running.length === 0)
             return;
         const command = ["python3", pluginService.getPluginPath(pluginId) + "/collect.py"];
         if (fetchPrices)
@@ -86,6 +90,8 @@ PluginComponent {
         if (previous && previous.join() === running.join())
             return;
         pluginService.setGlobalVar(pluginId, "running", running);
+        if (previous !== null && running.some(id => !previous.includes(id)))
+            refresh();
         // Follow the agent that was just opened; at startup, any open one if the saved choice is closed.
         const selected = pluginData.provider ?? "claude";
         const opened = running.filter(id => !(previous ?? []).includes(id) && agentShown(id));
